@@ -309,10 +309,8 @@ class ObjectPipeTest(TestCase):
         self.assertEqual(res, None)
         section = ["hostname", "status"]
         res = p.modify_delete(copy(self.obj), section)
-        with self.assertRaises(AttributeError):
-            a = res.hostname
-        with self.assertRaises(AttributeError):
-            a = res.status
+        self.assertFalse(hasattr(res, 'hostname'))
+        self.assertFalse(hasattr(res, 'status'))
 
     def test_modify_update(self):
         p = ObjectPipe()
