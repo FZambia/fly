@@ -9,6 +9,10 @@ from arya import Pipe, Logic, ObjectPipe
 from unittest import TestCase, main
 from copy import copy
 from datetime import datetime, date, time, timedelta
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 
 class PipeTest(TestCase):
@@ -257,6 +261,33 @@ class PipeTest(TestCase):
         }
         res = p.modify_update(copy(self.dictionary), section)
         self.assertTrue(res.get('repeats', None) == 150)
+
+    def test_apply_with_dict_pipe(self):
+        pipe = {
+            "match": {
+                "hostname": {
+                    "conditions": [("iexact", "mail.ru")]
+                }
+            },
+            "delete": "ALL"
+        }
+        p = Pipe()
+        res = p.apply(copy(self.dictionary), pipe)
+        self.assertEqual(res, None)
+
+    def test_apply_with_json_pipe(self):
+        pipe = {
+            "match": {
+                "hostname": {
+                    "conditions": [("iexact", "mail.ru")]
+                }
+            },
+            "delete": "ALL"
+        }
+        pipe = json.dumps(pipe)
+        p = Pipe()
+        res = p.apply(copy(self.dictionary), pipe)
+        self.assertEqual(res, None)
 
 
 class ObjectPipeTest(TestCase):

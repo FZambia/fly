@@ -18,6 +18,10 @@ from heapq import heappush, heappop
 from datetime import datetime, time, date, timedelta
 import re
 import sys
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 
 # True if we are running on Python 3.
@@ -172,8 +176,18 @@ class Pipe(Match, Update, Converter):
     def __init__(self, pipes=[]):
         self.pipes = []
         for pipe in pipes:
+            pipe = self.load_pipe(pipe)
             priority = pipe.get('priority', 0)
             heappush(self.pipes, (priority, pipe))
+
+    def load_pipe(self, pipe):
+        """
+        Pipe can be json string or python dictionary.
+        """
+        if isinstance(pipe, dict):
+            return pipe
+        else:
+            return json.loads(pipe)
 
     def get_object_value(self, obj, key):
         """
@@ -225,6 +239,7 @@ class Pipe(Match, Update, Converter):
         - matching (make sure that object satisfies conditions in match section of pipe)
         - modifying (update object keys(attributes), add new or delete some of them)
         """
+        pipe = self.load_pipe(pipe)
         match_section = pipe.get("match", None)
         if not match_section:
             # we have no match conditions, so just return object back.
