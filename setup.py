@@ -8,7 +8,7 @@ PY3 = sys.version_info[0] == 3
 
 
 if sys.argv[-1] == 'test':
-    status = os.system('python arya/tests.py' % interpreter)
+    status = os.system('python arya/tests.py')
     sys.exit(1 if status > 127 else status)
 
 
