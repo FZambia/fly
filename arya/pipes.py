@@ -411,14 +411,13 @@ class ObjectPipe(Pipe):
     """
     def get_object_value(self, obj, key):
         """
-        This is for object of type dict. This method must be overriden
-        to get attribute value of custom object.
+        Get attribute.
         """
         return getattr(obj, key, None)
 
     def del_object_key(self, obj, key):
         """
-        Delete key from dictionary.
+        Delete attribute.
         """
         try:
             delattr(obj, key)
@@ -427,13 +426,13 @@ class ObjectPipe(Pipe):
 
     def set_object_key(self, obj, key, value):
         """
-        add
+        Set attribute.
         """
         setattr(obj, key, value)
 
     def object_has_key(self, obj, key):
         """
-        Test if dictionary has key.
+        Test if object has attribute.
         """
         return hasattr(obj, key)
 
