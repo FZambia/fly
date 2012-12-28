@@ -453,20 +453,20 @@ if __name__ == '__main__':
         "priority": 0,  # priority only useful if you use process Pipe method
         "mode": "and",  # logic operator for keys matching
         "match": {  # match section
-                    "hostname": {
-        "mode": "or",  # logic operator for conditions matching
-        "conditions": [("endswith", ".ru"), ("endswith", ".com")],
-                    },
-        "protocol": {
-        "conditions": [("exact", "http")]
-        }
+            "hostname": {
+                "mode": "or",  # logic operator for conditions matching
+                "conditions": [("endswith", ".ru"), ("endswith", ".com")],
+            },
+            "protocol": {
+                "conditions": [("exact", "http")]
+            }
         },
         "update": {  # update section
-        "status": {
-        "operator": "set",
-        "value": "0",
-        "type": "int"
-        }
+            "status": {
+                "operator": "set",
+                "value": "0",
+                "type": "int"
+            }
         }
     }
 
