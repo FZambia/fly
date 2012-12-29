@@ -93,7 +93,8 @@ class Converter(object):
                 return value.time()
         elif value_type == "timedelta" and type(value).__name__ in ('str', 'int'):
             return timedelta(**{value_format: int(value)})
-
+        elif value_type == "json":
+            return json.loads(value)
         return value
 
 
@@ -143,33 +144,58 @@ class Match(object):
         return obj_value <= condition_value
 
 
-class Update(object):
+class Alter(object):
 
-    def make_update_set(self, obj_value, update_value):
-        return update_value
+    def make_alter_set(self, obj_value, alter_value, alter_info):
+        return alter_value
 
-    def make_update_add(self, obj_value, update_value):
-        return obj_value + update_value
+    def make_alter_replace(self, obj_value, alter_value, alter_info):
+        try:
+            is_string = isinstance(obj_value, basestring)
+        except NameError:
+            is_string = isinstance(obj_value, str)
 
-    def make_update_sub(self, obj_value, update_value):
-        return obj_value - update_value
-
-    def make_update_mul(self, obj_value, update_value):
-        return obj_value * update_value
-
-    def make_update_div(self, obj_value, update_value):
-        return obj_value / update_value
-
-    def make_update_append(self, obj_value, update_value):
-        obj_value.append(update_value)
+        replacement = alter_info.get('replacement', '')
+        replacement = self.convert(
+            replacement,
+            alter_info.get("type", None),
+            alter_info.get("format", None)
+        )
+        if is_string:
+            return obj_value.replace(alter_value, replacement)
+        elif isinstance(obj_value, list):
+            return [x if x != alter_value else replacement for x in obj_value]
         return obj_value
 
-    def make_update_prepend(self, obj_value, update_value):
-        obj_value.insert(0, update_value)
+    def make_alter_append(self, obj_value, alter_value, alter_info):
+        try:
+            is_string = isinstance(obj_value, basestring)
+        except NameError:
+            is_string = isinstance(obj_value, str)
+        if is_string:
+            return obj_value + alter_value
+        elif isinstance(obj_value, list):
+            obj_value.append(alter_value)
+            return obj_value
         return obj_value
 
+    def make_alter_prepend(self, obj_value, alter_value, alter_info):
+        try:
+            is_string = isinstance(obj_value, basestring)
+        except NameError:
+            is_string = isinstance(obj_value, str)
+        if is_string:
+            return alter_value + obj_value
+        elif isinstance(obj_value, list):
+            obj_value.insert(0, alter_value)
+            return obj_value
+        return obj_value
 
-class Pipe(Match, Update, Converter):
+    def make_alter_incr(self, obj_value, alter_value, alter_info):
+        return obj_value + alter_value
+
+
+class Pipe(Match, Alter, Converter):
     """
     This is a basic Pipe class for dictionaries.
     """
@@ -255,7 +281,7 @@ class Pipe(Match, Update, Converter):
             return obj
 
         # object matched! go to next stage - modify it.
-        return self.modify(obj, pipe)
+        return self.alter(obj, pipe)
 
     def check_match(self, obj, match_section, mode=Logic.AND):
         """
@@ -333,24 +359,53 @@ class Pipe(Match, Update, Converter):
         is_matched = method(object_value, condition_value)
         return is_matched
 
-    def modify(self, obj, pipe):
+    def alter(self, obj, pipe):
         """
-        This method returns modified object according to given pipe.
-        Pipe can have several sections responsible for object
-        modification:
-        - delete
-        - update
-        - add
+        This method returns modified object according to "alter"
+        section of given pipe. This section can contain different
+        operators: "set", "drop", "replace" etc..
         """
-        if obj and "delete" in pipe:
-            obj = self.modify_delete(obj, pipe["delete"])
-        if obj and "update" in pipe:
-            obj = self.modify_update(obj, pipe["update"])
-        if obj and "add" in pipe:
-            obj = self.modify_add(obj, pipe["add"])
+        alter_section = pipe.get("alter", None)
+        if not alter_section or not isinstance(alter_section, dict):
+            return obj
+        drop = alter_section.get("drop", None)
+        if drop:
+            obj = self.alter_delete(obj, drop)
+            del alter_section['drop']
+        if obj:
+            obj = self.apply_operators(obj, alter_section)
         return obj
 
-    def modify_delete(self, obj, section):
+    def apply_operators(self, obj, section):
+        """
+        For every operator in alter section apply it to
+        keys(attributes) of object.
+        """
+        for operator, key_section in pyiteritems(section):
+            for key, alter_info in pyiteritems(key_section):
+                obj_value = self.get_object_value(obj, key)
+                new_value = self.alter_value(operator, obj_value, alter_info)
+                self.set_object_key(obj, key, new_value)
+        return obj
+
+    def alter_value(self, operator, obj_value, alter_info):
+        """
+        Change object key(attribute) value according to operator and
+        alter information provided.
+        """
+        method = getattr(self, "make_alter_%s" % operator)
+        value = alter_info.get('value', None)
+        value_type = alter_info.get('type', None)
+        value_format = alter_info.get('format', None)
+        alter_value = self.convert(
+            value,
+            value_type,
+            value_format    
+        )
+        altered_value = method(obj_value, alter_value, alter_info)
+        return altered_value
+
+    def alter_delete(self, obj, section):
         """
         Delete all this object(i.e. return None) or remove
         custom keys(attributes) from object.
@@ -361,63 +416,6 @@ class Pipe(Match, Update, Converter):
             return obj
         else:
             return None
-
-    def modify_add(self, obj, section):
-        """
-        Add custom keys(attributes) to object.
-        """
-        for key, key_section in pyiteritems(section):
-            obj = self.modify_add_key(obj, key, key_section)
-        return obj
-
-    def modify_add_key(self, obj, key, key_section):
-        """
-        Add key(attribute) to object according to key_section data.
-        """
-        if self.object_has_key(obj, key):
-            return obj
-        value = key_section.get("value", None)
-        value_type = key_section.get("type", None)
-        value_format = key_section.get("format", None)
-        value = self.convert(value, value_type, value_format)
-        self.set_object_key(obj, key, value)
-        return obj
-
-    def modify_update(self, obj, section):
-        """
-        Update object keys(attributes) values.
-        """
-        for key, key_section in pyiteritems(section):
-            obj = self.modify_update_key(obj, key, key_section)
-        return obj
-
-    def modify_update_key(self, obj, key, key_section):
-        """
-        Update object's key(attribute) value according to key_section data.
-        """
-        if not self.object_has_key(obj, key):
-            return obj
-
-        # get object key(attribute) value.
-        object_value = self.get_object_value(obj, key)
-        # get value type
-        update_value_type = key_section.get("type", None)
-        # get value format
-        update_value_format = key_section.get("format", None)
-        # get action operator
-        operator = key_section.get("operator", "set")
-        # get update value
-        update_value = key_section.get("value", None)
-
-        update_value = self.convert(
-            update_value,
-            update_value_type,
-            update_value_format
-        )
-        method = getattr(self, "make_update_%s" % operator)
-        new_value = method(object_value, update_value)
-        self.set_object_key(obj, key, new_value)
-        return obj
 
 
 class ObjectPipe(Pipe):
@@ -458,7 +456,9 @@ if __name__ == '__main__':
         "hostname": "mail.ru",
         "protocol": "http",
         "resource": "http://mail.ru",
-        "status": 1
+        "status": 1,
+        "message": "critical error",
+        "repeats": 100
     }
     import pprint
     print('\ninitial data:\n')
@@ -475,11 +475,18 @@ if __name__ == '__main__':
                 "conditions": [("exact", "http")]
             }
         },
-        "update": {  # update section
-            "status": {
-                "operator": "set",
-                "value": "0",
-                "type": "int"
+        "alter": {
+            "set": {
+                "status": {
+                    "value": "2",
+                    "type": "int",
+                }
+            },
+            "replace": {
+                "message": {
+                    "value": "critical",
+                    "replacement": "info"
+                }
             }
         }
     }
@@ -489,7 +496,8 @@ if __name__ == '__main__':
     print('\ndata after applying pipe:\n')
     pprint.pprint(modified_data)
 
-    conclusion = """\nAs you can see we set status key to 0 in dictionary - because it
+    conclusion = """\nAs you can see we set status key to 2 and 
+changed word "critical" with word "info" in message in dictionary - because it
 contains hostname which ends with ".ru" or ".com" and its protocol
 key has exact value "http"."""
     print(conclusion)

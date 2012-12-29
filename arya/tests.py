@@ -188,79 +188,18 @@ class PipeTest(TestCase):
         res = p.check_key("mail.ru", section['conditions'], mode=Logic.OR)
         self.assertEqual(res, False)
 
-    def test_modify_add(self):
-        p = Pipe()
-        section = {'step': {'value': 1}}
-        res = p.modify_add(copy(self.dictionary), section)
-        self.assertTrue(res.get('step', None) == 1)
-
-        section = {'time': {'value': "21:40", "type": "time",
-                            "format": "%H:%M"}}
-        res = p.modify_add(copy(self.dictionary), section)
-        self.assertTrue(res.get('time', None) == time(21, 40))
-
-        section = {'time': {'value': "21:40:33", "type": "time",
-                            "format": "%H:%M:%S"}}
-        res = p.modify_add(copy(self.dictionary), section)
-        self.assertTrue(res.get('time', None) == time(21, 40, 33))
-
-        section = {'time': {'value': "2012-12-12 21:40:33", "type":
-                            "datetime", "format": "%Y-%m-%d %H:%M:%S"}}
-        res = p.modify_add(copy(self.dictionary), section)
-        self.assertTrue(
-            res.get('time', None) == datetime(2012, 12, 12, 21, 40, 33))
-
-        section = {'time': {'value': "2012-12-12", "type": "date",
-                            "format": "%Y-%m-%d"}}
-        res = p.modify_add(copy(self.dictionary), section)
-        self.assertTrue(res.get('time', None) == date(2012, 12, 12))
-
-        section = {'time': {'value': "1000", "type": "timedelta",
-                            "format": "seconds"}}
-        res = p.modify_add(copy(self.dictionary), section)
-        self.assertTrue(res.get('time', None) == timedelta(seconds=1000))
-
-    def test_modify_delete(self):
+    def test_alter_delete(self):
         p = Pipe()
         section = "all"
-        res = p.modify_delete(copy(self.dictionary), section)
+        res = p.alter_delete(copy(self.dictionary), section)
         self.assertEqual(res, None)
 
         section = ["hostname", "status"]
-        res = p.modify_delete(copy(self.dictionary), section)
+        res = p.alter_delete(copy(self.dictionary), section)
         self.assertEqual(
             [res.get('hostname', None), res.get('status', None)],
             [None, None]
         )
-
-    def test_modify_update(self):
-        p = Pipe()
-        section = {
-            "tags": {
-                "operator": "append",
-                "value": "test"
-            }
-        }
-        res = p.modify_update(copy(self.dictionary), section)
-        self.assertTrue("test" in res.get('tags', []))
-
-        section = {
-            "hostname": {
-                "value": "example.com"
-            }
-        }
-        res = p.modify_update(copy(self.dictionary), section)
-        self.assertTrue(res.get('hostname', None) == "example.com")
-
-        section = {
-            "repeats": {
-                "operator": "add",
-                "value": "50",
-                "type": 'int'
-            }
-        }
-        res = p.modify_update(copy(self.dictionary), section)
-        self.assertTrue(res.get('repeats', None) == 150)
 
     def test_apply_with_dict_pipe(self):
         pipe = {
@@ -269,7 +208,9 @@ class PipeTest(TestCase):
                     "conditions": [("iexact", "mail.ru")]
                 }
             },
-            "delete": "ALL"
+            "alter": {
+                "drop": "ALL"
+            }
         }
         p = Pipe()
         res = p.apply(copy(self.dictionary), pipe)
@@ -282,7 +223,9 @@ class PipeTest(TestCase):
                     "conditions": [("iexact", "mail.ru")]
                 }
             },
-            "delete": "ALL"
+            "alter": {
+                "drop": "ALL"
+            }
         }
         pipe = json.dumps(pipe)
         p = Pipe()
@@ -322,36 +265,15 @@ class ObjectPipeTest(TestCase):
         res = p.check_match(copy(self.obj), section)
         self.assertEqual(res, False)
 
-    def test_modify_add(self):
-        p = ObjectPipe()
-        section = {'step': {'value': 1}}
-        res = p.modify_add(copy(self.obj), section)
-        self.assertTrue(res.step == 1)
-
-        section = {'time': {'value': "21:40", "type": "time",
-            "format": "%H:%M"}}
-        res = p.modify_add(copy(self.obj), section)
-        self.assertTrue(res.time == time(21, 40))
-
-    def test_modify_delete(self):
+    def test_alter_delete(self):
         p = ObjectPipe()
         section = "all"
-        res = p.modify_delete(copy(self.obj), section)
+        res = p.alter_delete(copy(self.obj), section)
         self.assertEqual(res, None)
         section = ["hostname", "status"]
-        res = p.modify_delete(copy(self.obj), section)
+        res = p.alter_delete(copy(self.obj), section)
         self.assertFalse(hasattr(res, 'hostname'))
         self.assertFalse(hasattr(res, 'status'))
-
-    def test_modify_update(self):
-        p = ObjectPipe()
-        section = {
-            "hostname": {
-                "value": "example.com"
-            }
-        }
-        res = p.modify_update(copy(self.obj), section)
-        self.assertTrue(res.hostname == "example.com")
 
 
 if __name__ == '__main__':
