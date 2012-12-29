@@ -74,4 +74,55 @@ assert altered_message['text'] == 'please, fork me on Bitbucket!'
 
 ```
 
+MATCH condition operators
+-------------------------
+Very similar to Django's queryset filter operators:
+
+* exact
+* iexact
+* startswith
+* istartswith
+* endswith
+* iendswith
+* contains
+* icontains
+* regex
+* gt
+* lt
+* gte
+* lte
+* ne
+
+Matching logic can be controlled with key `mode`: it can be:
+
+* or
+* and (default)
+
+
+ALTER operators
+---------------
+
+* set
+* replace
+* incr
+* append
+* prepend
+
+
+TYPE
+----
+
+* datetime
+* date
+* time
+* int
+* str
+* bool
+* float
+
+
+FORMAT
+------
+This is only useful with datetime, date and time types and must be valid format string from Python datetime module.
+
   
