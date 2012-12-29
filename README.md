@@ -1,5 +1,5 @@
-ARYA
-====
+fly
+===
 
 This project in development. README will be updated.
 
@@ -27,7 +27,7 @@ Generally you do not need to make any modifications with this message - just sav
 Lets write some code and change that dict accorting to our complaints:
 
 ```python
-from arya import Pipe
+from fly import Pipe
 
 message = {
 	'username': 'fzambia',

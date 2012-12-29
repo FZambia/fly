@@ -13,7 +13,7 @@ if sys.argv[-1] == 'test':
 
 
 distutils.core.setup(
-    name='arya',
+    name='fly',
     version="0.0.1",
     description="Modify your dictionaries (or objects instances) on the fly using json configuration",
     url='https://github.com/FZambia/aria',
@@ -22,12 +22,15 @@ distutils.core.setup(
     author_email='frvzmb@gmail.com',
     license="http://www.apache.org/licenses/LICENSE-2.0",
     keywords="python dict object json",
-    packages=['arya'],
+    packages=['fly'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.0',
+        'Programming Language :: Python :: 3.1',
+        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
     ],
 )

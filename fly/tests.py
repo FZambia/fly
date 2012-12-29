@@ -5,7 +5,7 @@ import os
 path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, path)
 
-from arya import Pipe, Logic, ObjectPipe
+from fly import Pipe, Logic, ObjectPipe
 from unittest import TestCase, main
 from copy import copy
 from datetime import datetime, date, time, timedelta
