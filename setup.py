@@ -3,12 +3,9 @@ import sys
 import distutils.core
 
 
-# True if we are running on Python 3.
-PY3 = sys.version_info[0] == 3
-
 
 if sys.argv[-1] == 'test':
-    status = os.system('python arya/tests.py')
+    status = os.system('python fly/tests.py')
     sys.exit(1 if status > 127 else status)
 
 
