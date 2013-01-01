@@ -5,7 +5,7 @@ import os
 path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, path)
 
-from fly import Pipe, Logic, ObjectPipe
+from fly import Pipe, Logic, ObjectPipe, Match, Alter
 from unittest import TestCase, main
 from copy import copy
 from datetime import datetime, date, time, timedelta
@@ -29,6 +29,43 @@ class PipeTest(TestCase):
             "sms": True,
             "tags": ["http", "alert"]
         }
+
+    def test_match_functions(self):
+
+        m = Match()
+
+        self.assertTrue(m.make_match_exact('test', 'test'))
+
+        self.assertTrue(m.make_match_iexact('tEst', 'test'))
+
+        self.assertTrue(m.make_match_startswith('test', 'te'))
+
+        self.assertTrue(m.make_match_istartswith('test', 'Te'))
+
+        self.assertTrue(m.make_match_endswith('test', 'st'))
+
+        self.assertTrue(m.make_match_iendswith('tesT', 'St'))
+
+        self.assertTrue(m.make_match_contains('test', 'es'))
+
+        self.assertTrue(m.make_match_icontains('tEst', 'eS'))
+
+        self.assertTrue(m.make_match_ne('test', 'rest'))
+
+        self.assertTrue(m.make_match_gt(10, 5))
+
+        self.assertTrue(m.make_match_lt(1, 5))
+
+        self.assertTrue(m.make_match_gte(10, 10))
+
+        self.assertTrue(m.make_match_lte(10, 10))
+
+
+    def test_alter_functions(self):
+
+        a = Alter()
+
+        self.assertEqual('test', a.make_alter_set('test2', 'test', {}))
 
     def test_check_match_without_logic(self):
 
