@@ -5,7 +5,7 @@ import os
 path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, path)
 
-from fly import Pipe, Logic, ObjectPipe, Match, Alter
+from fly import Pipe, Logic, ObjectPipe, Match, Alter, Converter
 from unittest import TestCase, main
 from copy import copy
 from datetime import datetime, date, time, timedelta
@@ -63,9 +63,29 @@ class PipeTest(TestCase):
 
     def test_alter_functions(self):
 
-        a = Alter()
+        class Test(Alter, Converter):
+            pass
+
+        a = Test()
 
         self.assertEqual('test', a.make_alter_set('test2', 'test', {}))
+
+        self.assertEqual(
+            'I love python',
+            a.make_alter_replace(
+                'I love ruby',
+                'ruby',
+                {'replacement': 'python'}
+            )
+        )
+
+        self.assertEqual([1, 2], a.make_alter_append([1], 2, {}))
+        self.assertEqual('ab', a.make_alter_append('a', 'b', {}))
+
+        self.assertEqual([1, 2], a.make_alter_prepend([2], 1, {}))
+        self.assertEqual('ab', a.make_alter_prepend('b', 'a', {}))
+
+        self.assertEqual(100, a.make_alter_incr(20, 80, {}))
 
     def test_check_match_without_logic(self):
 

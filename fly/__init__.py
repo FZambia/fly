@@ -1,1 +1,1 @@
-from .pipes import Pipe, ObjectPipe, Logic, Match, Alter
+from .pipes import Pipe, ObjectPipe, Logic, Match, Alter, Converter
