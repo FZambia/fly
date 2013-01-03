@@ -40,9 +40,12 @@ pipe = {
 	"match": {
 		"created": {
 			"mode": "or",
-			"conditions": [("lte", "09:00:00"), ("gte", "21:00:00")],
+			"conditions": [["lte", "09:00:00"], ["gte", "21:00:00"]],
 			"type": "time",
 			"format": "%H:%M:%S"
+		},
+		"text": {
+			"conditions": [["icontains", "Github"]]
 		}
 	},
 	"alter": {
@@ -56,7 +59,7 @@ assert altered_message is None
 pipe = {
 	"match": {
 		"username": {
-			"conditions": [("exact", "fzambia")],
+			"conditions": [["exact", "fzambia"]],
 		}
 	},
 	"alter": {
